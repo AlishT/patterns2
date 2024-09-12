@@ -1,0 +1,114 @@
+class RoundMag
+{
+private:
+	const unsigned int capacity;
+	unsigned int currentlySpawned;
+	unsigned int minSpawnedInPool;
+	std::vector<Bullet*> bullets;
+	std::vector<bool> bulletNumFlags;
+public:
+	enum class Result
+	{
+		Ok,
+		NoBullesInMag
+	};
+
+public:
+	RoundMag() = delete;
+	RoundMag(const RoundMag&) = delete;
+	RoundMag(RoundMag&&) = delete;
+
+	RoundMag(unsigned int value) : 
+		capacity(value),
+		bullets(value, nullptr),
+		bulletNumFlags(value, false)
+	{
+		minSpawnedInPool = capacity / 3;
+
+		for(unsigned int i = 0; i < minSpawnedInPool; i++)
+		{
+			bullets[i] = new Bullet();
+			currentlySpawned++;
+		}
+	}
+
+	~RoundMag() 
+	{
+		for (unsigned int i = 0; i < capacity; i++) 
+		{
+			delete bullets.at(i);
+		}
+	}
+
+	std::pair<RoundMag::Result, std::vector<Bullet*>> GetFreeBullets(unsigned int value) 
+	{
+		std::vector<Bullet*> _bullets;
+		_bullets.reserve(value);
+
+		for(unsigned int i = 0; i < currentlySpawned; i++)
+		{
+			if(!bulletNumFlags[i])
+			{
+				_bullets.push_back(bullets[i]);
+				bulletNumFlags[i] = true;
+				
+				if (_bullets.size() == value) 
+				{
+					break;
+				}
+			}
+		}
+
+		while(value > currentlySpawned)
+		{
+			unsigned int leftInPool;
+			
+			if (value - currentlySpawned < minSpawnedInPool)
+			{
+				leftInPool = value - currentlySpawned;
+			}
+			else
+			{
+				leftInPool = minSpawnedInPool;
+			}
+			
+			ReloadMag(leftInPool);
+			std::cout << "Added " << leftInPool << " bullets" << std::endl;
+		}
+
+		if (capacity == currentlySpawned) 
+		{
+			std::cout << "Pool is emplty!" << std::endl;
+		}
+
+		return
+		{
+			_bullets.size() == value ? Result::Ok : Result::NoBullesInMag,
+			_bullets
+		};
+	}
+
+	void ReleaseBuller(Bullet* bullet)
+	{
+		for (unsigned int i = 0; i < bullets.size(); i++) 
+		{
+			if (bullets[i] == bullet) 
+			{
+				bulletNumFlags[i] = false;
+				break;
+			}
+		}
+	}
+
+	void ReloadMag(unsigned int value)
+	{
+		if (currentlySpawned != capacity)
+		{
+			for (unsigned int i = 0; i < value; i++) 
+			{
+				bullets[i] = new Bullet();
+				currentlySpawned++;
+			}
+		}
+	}
+};
